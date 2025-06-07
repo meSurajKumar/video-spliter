@@ -32,41 +32,29 @@ Input Video: A 9:16 video (e.g., 1080x1920, MP4 with H.264/AAC) named input.mp4.
 
 Setup
 
-Clone or Download:
+## Clone or Download:
 
-Download the script (split-video-ffmpeg-drawtext.js) to a project folder (e.g., video-splitter).
+## Install Dependencies:
+```
+npm i
+```
 
-
-Install Dependencies:
-
-Navigate to the project folder:cd video-splitter
-
-
-Initialize a Node.js project and install fluent-ffmpeg:npm init -y
-npm install fluent-ffmpeg
-
-
-
-
+## Navigate to the project folder
+```
 Prepare Folders:
 
 Create a raw-videos folder in the project directory.
 Place your 9:16 video as raw-videos/input.mp4.
 The script will create result (for output videos) and temp (for temporary files) folders automatically.
+```
 
 
-
-Usage
-
+## Usage
+```
 Run the Script:
 
-Use the default title ("My Video"):node split-video-ffmpeg-drawtext.js
-
-
-Specify a custom title:node split-video-ffmpeg-drawtext.js "My Awesome Video"
-
-
-
+node split_video.js
+```
 
 Outputs:
 
