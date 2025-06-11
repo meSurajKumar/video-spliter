@@ -6,38 +6,39 @@ const path = require('path');
 const inputDir = path.join(__dirname, 'raw-videos');
 const outputDir = path.join(__dirname, 'result');
 const tempDir = path.join(__dirname, 'temp');
-const segmentDuration = 30; // Seconds
-const inputVideo = 'input.mp4'; // Name of the video file in raw-videos
+const thumbnailDir = path.join(__dirname, 'thumbnails');
+const descriptionDir = path.join(__dirname, 'descriptions');
+const segmentDuration = 180; // Seconds 3 minutes
+const inputVideo = 'input.mp4'; // Input video
+const thumbnailImage = 'thumbnail.jpg'; // Common thumbnail
 
-// Video title: Change this variable or pass via command line
-let videoTitle = 'Autonomous Weapons'; // Default title
+// Video title: Change or pass via command line
+let videoTitle = 'My Video'; // Default
 if (process.argv[2]) {
-  videoTitle = process.argv[2]; // Override with command-line argument
+  videoTitle = process.argv[2];
 }
 
-// Bottom text for YouTube promotion
+// Caption template for Instagram Reels
+const descriptionTemplate = 'Autonomous Weapons -{X} #short #reels #weapons #autonomousweapons #robots';
+
+// Bottom text for video overlay
 const bottomText = 'View full single video on YouTube channel, link in bio';
-// For multi-line bottom text (uncomment to use)
-// const bottomTextLine1 = 'View full single video';
-// const bottomTextLine2 = 'on YouTube channel, link in bio';
 
-// Optional: Set FFmpeg and ffprobe paths explicitly (uncomment and adjust as needed)
-// ffmpeg.setFfmpegPath('C:/ffmpeg/bin/ffmpeg.exe'); // Windows example
-// ffmpeg.setFfprobePath('C:/ffmpeg/bin/ffprobe.exe'); // Windows example
-
-// Ensure directories exist
+// Ensure directories
 async function ensureDirectories() {
   try {
     await fs.mkdir(inputDir, { recursive: true });
     await fs.mkdir(outputDir, { recursive: true });
     await fs.mkdir(tempDir, { recursive: true });
+    await fs.mkdir(thumbnailDir, { recursive: true });
+    await fs.mkdir(descriptionDir, { recursive: true });
   } catch (error) {
     console.error('Error creating directories:', error.message);
     process.exit(1);
   }
 }
 
-// Get video duration and resolution using ffprobe
+// Get video metadata
 async function getVideoMetadata(inputPath) {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(inputPath, (err, metadata) => {
@@ -53,93 +54,109 @@ async function getVideoMetadata(inputPath) {
   });
 }
 
-// Create a preview segment with multiple text position options
+// Generate caption
+async function generateDescription(partNumber, outputPath) {
+  const description = descriptionTemplate.replace('{X}', partNumber);
+  try {
+    await fs.writeFile(outputPath, description);
+    console.log(`Caption created: ${outputPath}`);
+  } catch (error) {
+    console.error(`Error creating caption for part ${partNumber}:`, error.message);
+  }
+}
+
+// Generate thumbnail
+async function generateThumbnail(partNumber, outputPath) {
+  const thumbnailInput = path.join(thumbnailDir, thumbnailImage);
+  const thumbnailText = `Asteroid Mining PART -${partNumber}`;
+  return new Promise((resolve, reject) => {
+    try {
+      fs.access(thumbnailInput).catch(() => {
+        throw new Error(`Thumbnail image ${thumbnailInput} not found.`);
+      });
+
+      ffmpeg(thumbnailInput)
+        .videoFilters([
+          `drawtext=text='${thumbnailText.replace(/'/g, "\\'")}':fontcolor=white:fontsize=60:x=108:y=192:shadowcolor=black:shadowx=2:shadowy=2`
+        ])
+        .outputOptions(['-vframes 1', '-y'])
+        .output(outputPath)
+        .on('end', () => {
+          console.log(`Thumbnail created for part ${partNumber}: ${outputPath}`);
+          resolve(outputPath);
+        })
+        .on('error', (err) => {
+          console.error(`Error creating thumbnail for part ${partNumber}:`, err.message);
+          reject(err);
+        })
+        .run();
+    } catch (error) {
+      console.error(`Thumbnail generation error: ${error.message}`);
+      reject(error);
+    }
+  });
+}
+
+// Create preview
 async function createPreviewSegment(inputPath, title, outputPath, videoWidth, videoHeight) {
   return new Promise((resolve, reject) => {
     const escapedTitle = title.replace(/'/g, "\\'");
     const escapedBottomText = bottomText.replace(/'/g, "\\'");
-    // For multi-line bottom text (uncomment to use)
-    // const escapedBottomTextLine1 = bottomTextLine1.replace(/'/g, "\\'");
-    // const escapedBottomTextLine2 = bottomTextLine2.replace(/'/g, "\\'");
     const topTextFontSize = 40;
     const bottomTextFontSize = 30;
 
-    // Define multiple positions to test
     const textPositions = [
       {
-        name: 'User-Specified (Title above Bottom Text)',
+        name: 'User-Specified',
         top: `drawtext=text='${escapedTitle} - Part 1':fontcolor=white:fontsize=${topTextFontSize}:x=52:y=488`,
         bottom: `drawtext=text='${escapedBottomText}':fontcolor=white:fontsize=${bottomTextFontSize}:x=52:y=528`
-        // For multi-line (uncomment to use)
-        // bottom: [
-        //   `drawtext=text='${escapedBottomTextLine1}':fontcolor=white:fontsize=${bottomTextFontSize}:x=52:y=528`,
-        //   `drawtext=text='${escapedBottomTextLine2}':fontcolor=white:fontsize=${bottomTextFontSize}:x=52:y=568`
-        // ]
       },
       {
-        name: 'Centered (Title above Bottom Text)',
-        top: `drawtext=text='${escapedTitle} - Part 1':fontcolor=white:fontsize=${topTextFontSize}:x=(w-text_w)/2:y=${videoHeight - 140}`,
-        bottom: `drawtext=text='${escapedBottomText}':fontcolor=white:fontsize=${bottomTextFontSize}:x=(w-text_w)/2:y=${videoHeight - 100}`
+        name: 'Centered',
+        top: `drawtext=text='${escapedTitle} - Part 1':fontcolor=white:fontsize=${topTextFontSize}:x=(w-text_w)/2:y=${videoHeight - 232}`,
+        bottom: `drawtext=text='${escapedBottomText}':fontcolor=white:fontsize=${bottomTextFontSize}:x=(w-text_w)/2:y=${videoHeight - 192}`
       },
       {
-        name: 'Bottom Left (Title above Bottom Text)',
-        top: `drawtext=text='${escapedTitle} - Part 1':fontcolor=white:fontsize=${topTextFontSize}:x=20:y=${videoHeight - 140}`,
-        bottom: `drawtext=text='${escapedBottomText}':fontcolor=white:fontsize=${bottomTextFontSize}:x=20:y=${videoHeight - 100}`
+        name: 'Bottom Left',
+        top: `drawtext=text='${escapedTitle} - Part 1':fontcolor=white:fontsize=${topTextFontSize}:x=108:y=${videoHeight - 232}`,
+        bottom: `drawtext=text='${escapedBottomText}':fontcolor=white:fontsize=${bottomTextFontSize}:x=108:y=${videoHeight - 192}`
       }
     ];
 
-    // Combine filters to show all positions sequentially
-    const filters = textPositions.flatMap((pos, index) => {
-      const startTime = index * 5;
-      const endTime = (index + 1) * 5;
-      const bottomFilters = Array.isArray(pos.bottom)
-        ? pos.bottom.map((b, i) => ({
-            filter: 'drawtext',
-            options: {
-              text: i === 0 ? escapedBottomTextLine1 : escapedBottomTextLine2,
-              fontcolor: 'white',
-              fontsize: bottomTextFontSize,
-              x: b.split(':x=')[1].split(':')[0],
-              y: b.split(':y=')[1].split(':')[0],
-              enable: `between(t,${startTime},${endTime})`
-            }
-          }))
-        : [{
-            filter: 'drawtext',
-            options: {
-              text: escapedBottomText,
-              fontcolor: 'white',
-              fontsize: bottomTextFontSize,
-              x: pos.bottom.split(':x=')[1].split(':')[0],
-              y: pos.bottom.split(':y=')[1].split(':')[0],
-              enable: `between(t,${startTime},${endTime})`
-            }
-          }];
-      return [
-        {
-          filter: 'drawtext',
-          options: {
-            text: `${escapedTitle} - Part 1`,
-            fontcolor: 'white',
-            fontsize: topTextFontSize,
-            x: pos.top.split(':x=')[1].split(':')[0],
-            y: pos.top.split(':y=')[1].split(':')[0],
-            enable: `between(t,${startTime},${endTime})`
-          }
-        },
-        ...bottomFilters
-      ];
-    });
+    const filters = textPositions.flatMap((pos, index) => [
+      {
+        filter: 'drawtext',
+        options: {
+          text: `${escapedTitle} - Part 1`,
+          fontcolor: 'white',
+          fontsize: topTextFontSize,
+          x: pos.top.split(':x=')[1].split(':')[0],
+          y: pos.top.split(':y=')[1].split(':')[0],
+          enable: `between(t,${index * 5},${(index + 1) * 5})`
+        }
+      },
+      {
+        filter: 'drawtext',
+        options: {
+          text: escapedBottomText,
+          fontcolor: 'white',
+          fontsize: bottomTextFontSize,
+          x: pos.bottom.split(':x=')[1].split(':')[0],
+          y: pos.bottom.split(':y=')[1].split(':')[0],
+          enable: `between(t,${index * 5},${(index + 1) * 5})`
+        }
+      }
+    ]);
 
     ffmpeg(inputPath)
       .setStartTime(0)
-      .duration(15) // 15-second preview (5 seconds per position)
+      .duration(15)
       .videoFilters(filters)
       .outputOptions(['-c:v libx264', '-c:a aac', '-y'])
       .output(outputPath)
       .on('end', () => {
         console.log(`Preview created: ${outputPath}`);
-        console.log('Positions tested: User-Specified (0-5s), Centered (5-10s), Bottom Left (10-15s)');
+        console.log('Positions: User-Specified (0-5s), Centered (5-10s), Bottom Left (10-15s)');
         resolve(outputPath);
       })
       .on('error', (err) => {
@@ -150,7 +167,7 @@ async function createPreviewSegment(inputPath, title, outputPath, videoWidth, vi
   });
 }
 
-// Split video into segments
+// Split video
 async function splitVideo(inputPath, duration) {
   const numSegments = Math.ceil(duration / segmentDuration);
   const promises = [];
@@ -182,7 +199,7 @@ async function splitVideo(inputPath, duration) {
   return Promise.all(promises);
 }
 
-// Add text overlays using FFmpeg drawtext (final position)
+// Add text overlays
 async function addTextOverlay(inputSegment, title, partNumber, outputPath, videoHeight) {
   return new Promise((resolve, reject) => {
     const escapedTitle = title.replace(/'/g, "\\'");
@@ -190,14 +207,10 @@ async function addTextOverlay(inputSegment, title, partNumber, outputPath, video
     const topTextFontSize = 40;
     const bottomTextFontSize = 30;
 
-    // Place title just above bottom text (x=52, y=488)
     ffmpeg(inputSegment)
       .videoFilters([
         `drawtext=text='${escapedTitle} - Part ${partNumber}':fontcolor=white:fontsize=${topTextFontSize}:x=52:y=488`,
         `drawtext=text='${escapedBottomText}':fontcolor=white:fontsize=${bottomTextFontSize}:x=52:y=528`
-        // For multi-line bottom text (uncomment to use)
-        // `drawtext=text='${escapedBottomTextLine1}':fontcolor=white:fontsize=${bottomTextFontSize}:x=52:y=528`,
-        // `drawtext=text='${escapedBottomTextLine2}':fontcolor=white:fontsize=${bottomTextFontSize}:x=52:y=568`
       ])
       .outputOptions(['-c:v libx264', '-c:a aac', '-y'])
       .output(outputPath)
@@ -213,75 +226,87 @@ async function addTextOverlay(inputSegment, title, partNumber, outputPath, video
   });
 }
 
-// Main function
+// Main
 async function main() {
   try {
-    console.log(`Starting video processing with title: "${videoTitle}"`);
+    console.log(`Starting with title: "${videoTitle}"`);
     await ensureDirectories();
     const inputPath = path.join(inputDir, inputVideo);
 
-    // Check if input video exists
+    // Check input
     try {
       await fs.access(inputPath);
     } catch {
-      console.error(`Input video ${inputPath} not found. Please place "${inputVideo}" in the raw-videos folder.`);
+      console.error(`Input video ${inputPath} not found. Place "${inputVideo}" in raw-videos.`);
       process.exit(1);
     }
 
-    // Get video metadata (duration and resolution)
-    console.log('Retrieving video metadata...');
+    // Check thumbnail
+    const thumbnailPath = path.join(thumbnailDir, thumbnailImage);
+    try {
+      await fs.access(thumbnailPath);
+    } catch {
+      console.error(`Thumbnail ${thumbnailPath} not found. Place "${thumbnailImage}" in thumbnails.`);
+      process.exit(1);
+    }
+
+    // Get metadata
+    console.log('Retrieving metadata...');
     let metadata;
     try {
       metadata = await getVideoMetadata(inputPath);
-      console.log(`Video duration: ${metadata.duration} seconds, Resolution: ${metadata.width}x${metadata.height}`);
+      console.log(`Duration: ${metadata.duration}s, Resolution: ${metadata.width}x${metadata.height}`);
       if (metadata.width / metadata.height > 1) {
-        console.warn('Warning: Video aspect ratio is not 9:16. Expected width < height.');
+        console.warn('Warning: Not 9:16.');
       }
       if (metadata.height < 528 + 50) {
-        console.warn('Warning: Specified y=528 for bottom text may be too low for video height. Consider y=(h-100).');
+        console.warn('Warning: y=528 too low. Consider y=(h-192).');
       }
     } catch (error) {
-      console.error('Failed to retrieve video metadata:', error.message);
+      console.error('Metadata error:', error.message);
       process.exit(1);
     }
 
-    // Create preview segment to test text positions
-    console.log('Creating preview segment to test text positions...');
+    // Create preview
+    console.log('Creating preview...');
     const previewPath = path.join(outputDir, 'preview.mp4');
     try {
       await createPreviewSegment(inputPath, videoTitle, previewPath, metadata.width, metadata.height);
-      console.log('Please review the preview video to confirm text positions.');
-      console.log('Then, update the addTextOverlay function if needed.');
     } catch (error) {
-      console.error('Failed to create preview:', error.message);
-      // Continue to process segments even if preview fails
+      console.error('Preview error:', error.message);
     }
 
-    // Split video into segments
-    console.log('Splitting video into segments...');
+    // Split video
+    console.log('Splitting video...');
     let segments;
     try {
       segments = await splitVideo(inputPath, metadata.duration);
     } catch (error) {
-      console.error('Failed to split video:', error.message);
+      console.error('Split error:', error.message);
       process.exit(1);
     }
 
-    // Add text overlays to each segment
-    console.log('Adding text overlays to segments...');
+    // Process segments
+    console.log('Processing segments...');
     for (let i = 0; i < segments.length; i++) {
-      const outputPath = path.join(outputDir, `video_part_${i + 1}.mp4`);
+      const partNumber = i + 1;
+      const outputVideoPath = path.join(outputDir, `video_part_${partNumber}.mp4`);
+      const descriptionPath = path.join(descriptionDir, `description_part_${partNumber}.txt`);
+      const thumbnailOutputPath = path.join(thumbnailDir, `thumbnail_part_${partNumber}.jpg`);
+
       try {
-        await addTextOverlay(segments[i], videoTitle, i + 1, outputPath, metadata.height);
+        await addTextOverlay(segments[i], videoTitle, partNumber, outputVideoPath, metadata.height);
+        await generateDescription(partNumber, descriptionPath);
+        await generateThumbnail(partNumber, thumbnailOutputPath);
       } catch (error) {
-        console.error(`Failed to process part ${i + 1}:`, error.message);
+        console.error(`Part ${partNumber} error:`, error.message);
       }
     }
 
-    // Clean up temp files
-    console.log('Cleaning up temporary files...');
+    // Clean up
+    console.log('Cleaning up...');
     await fs.rm(tempDir, { recursive: true, force: true });
-    console.log('Processing complete! Check the result folder for output videos.');
+    console.log('Complete! Check result, descriptions, thumbnails.');
   } catch (error) {
     console.error('Unexpected error:', error.message);
     process.exit(1);
