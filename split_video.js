@@ -8,18 +8,18 @@ const outputDir = path.join(__dirname, 'result');
 const tempDir = path.join(__dirname, 'temp');
 const thumbnailDir = path.join(__dirname, 'thumbnails');
 const descriptionDir = path.join(__dirname, 'descriptions');
-const segmentDuration = 180; // Seconds 3 minutes
+const segmentDuration = 160; // Seconds 3 minutes
 const inputVideo = 'input.mp4'; // Input video
 const thumbnailImage = 'thumbnail.jpg'; // Common thumbnail
 
 // Video title: Change or pass via command line
-let videoTitle = 'My Video'; // Default
+let videoTitle = '89 Seconds to Midnight'; // Default
 if (process.argv[2]) {
   videoTitle = process.argv[2];
 }
 
 // Caption template for Instagram Reels
-const descriptionTemplate = 'Autonomous Weapons -{X} #short #reels #weapons #autonomousweapons #robots';
+const descriptionTemplate = '89 Seconds to Midnight -{X} #short #reels #doomsday #earth #war';
 
 // Bottom text for video overlay
 const bottomText = 'View full single video on YouTube channel, link in bio';
@@ -68,7 +68,7 @@ async function generateDescription(partNumber, outputPath) {
 // Generate thumbnail
 async function generateThumbnail(partNumber, outputPath) {
   const thumbnailInput = path.join(thumbnailDir, thumbnailImage);
-  const thumbnailText = `Asteroid Mining PART -${partNumber}`;
+  const thumbnailText = `${videoTitle} PART -${partNumber}`;
   return new Promise((resolve, reject) => {
     try {
       fs.access(thumbnailInput).catch(() => {
