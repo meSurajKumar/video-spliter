@@ -17,7 +17,6 @@ let videoTitle = 'Genetic Superhumans'; // Default
 if (process.argv[2]) {
   videoTitle = process.argv[2];
 }
-
 // Caption template for Instagram Reels
 const descriptionTemplate = `${videoTitle} -{X} #short #reels #superhuman #superman #geneediting`;
 
