@@ -13,13 +13,13 @@ const inputVideo = 'input.mp4'; // Input video
 const thumbnailImage = 'thumbnail.jpg'; // Common thumbnail
 
 // Video title: Change or pass via command line
-let videoTitle = '89 Seconds to Midnight'; // Default
+let videoTitle = 'Genetic Superhumans'; // Default
 if (process.argv[2]) {
   videoTitle = process.argv[2];
 }
 
 // Caption template for Instagram Reels
-const descriptionTemplate = '89 Seconds to Midnight -{X} #short #reels #doomsday #earth #war';
+const descriptionTemplate = `${videoTitle} -{X} #short #reels #superhuman #superman #geneediting`;
 
 // Bottom text for video overlay
 const bottomText = 'View full single video on YouTube channel, link in bio';
