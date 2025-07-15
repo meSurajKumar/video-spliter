@@ -13,12 +13,12 @@ const inputVideo = 'input.mp4'; // Input video
 const thumbnailImage = 'thumbnail.jpg'; // Common thumbnail
 
 // Video title: Change or pass via command line
-let videoTitle = 'Ending Aging Immortality 2025'; // Default
+let videoTitle = 'Weaponizing AI 2025'; // Default
 if (process.argv[2]) {
   videoTitle = process.argv[2];
 }
 // Caption template for Instagram Reels
-const descriptionTemplate = `${videoTitle} -{X} #short #reels #superhuman #superman #geneediting #EndingAging #Immortality #AntiAging #LiveForever #Longevity #YouthfulLiving #TimelessHealth #ForeverYoung #AgingReversed #LifeExtension #FountainOfYouth #Ageless #Healthspan #Biotech #FutureOfHealth #ScientificBreakthrough #StopAging #Innovation #LifeScience`;
+const descriptionTemplate = `${videoTitle} -{X} #short #reels #WeaponizingAI #AITech #ArtificialIntelligence #AIEthics #AIFuture #MachineLearning #AIInDefense #TechnologyRevolution #CyberSecurity #DigitalWeapons #Innovation #TechForGood #AIMilitaryUse #FutureTech #SmartTechnology #AIandSecurity #EthicalAI #DisruptiveTechnology #AIImpact`;
 
 // Bottom text for video overlay
 const bottomText = 'View full single video on YouTube channel, link in bio';
