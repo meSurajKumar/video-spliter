@@ -13,12 +13,12 @@ const inputVideo = 'input.mp4'; // Input video
 const thumbnailImage = 'thumbnail.jpg'; // Common thumbnail
 
 // Video title: Change or pass via command line
-let videoTitle = 'Genetic Superhumans'; // Default
+let videoTitle = 'Ending Aging Immortality 2025'; // Default
 if (process.argv[2]) {
   videoTitle = process.argv[2];
 }
 // Caption template for Instagram Reels
-const descriptionTemplate = `${videoTitle} -{X} #short #reels #superhuman #superman #geneediting`;
+const descriptionTemplate = `${videoTitle} -{X} #short #reels #superhuman #superman #geneediting #EndingAging #Immortality #AntiAging #LiveForever #Longevity #YouthfulLiving #TimelessHealth #ForeverYoung #AgingReversed #LifeExtension #FountainOfYouth #Ageless #Healthspan #Biotech #FutureOfHealth #ScientificBreakthrough #StopAging #Innovation #LifeScience`;
 
 // Bottom text for video overlay
 const bottomText = 'View full single video on YouTube channel, link in bio';
@@ -67,7 +67,8 @@ async function generateDescription(partNumber, outputPath) {
 // Generate thumbnail
 async function generateThumbnail(partNumber, outputPath) {
   const thumbnailInput = path.join(thumbnailDir, thumbnailImage);
-  const thumbnailText = `${videoTitle} PART -${partNumber}`;
+  // const thumbnailText = `${videoTitle} PART -${partNumber}`;
+  const thumbnailText = `PART -${partNumber}`;
   return new Promise((resolve, reject) => {
     try {
       fs.access(thumbnailInput).catch(() => {
